@@ -44,9 +44,13 @@ public class BluetoothChatService {
     // Name for the SDP record when creating server socket
     private static final String NAME_SECURE = "BluetoothChatSecure";
 
-    private static final UUID MY_UUID_SECURE =
-        UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+    //终端蓝牙uuid ,应用间均可使用
+    public static final String SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB";
+    //应用间使用，终端mpos和手机通信不可使用
+   // public static final String SPP_UUID = "fa87c0d0-afac-11de-8a39-0800200c9a66";
 
+    private static final UUID MY_UUID_SECURE =
+            UUID.fromString(SPP_UUID);
 
     private int mState;
     // 显示当前连接状态

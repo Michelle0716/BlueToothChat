@@ -22,6 +22,7 @@ import com.michelle.blt.bluetoothchat.adapter.RecyclerBlueToothAdapter;
 import com.michelle.blt.bluetoothchat.bean.BlueTooth;
 import com.michelle.blt.bluetoothchat.receiver.BlueToothReceiver;
 import com.michelle.blt.bluetoothchat.service.BluetoothChatService;
+import com.michelle.blt.bluetoothchat.util.ClsUtils;
 import com.michelle.blt.bluetoothchat.util.ToastUtil;
 import com.michelle.blt.bluetoothchat.vinterface.BlueToothInterface;
 import com.rdc.zzh.bluetoothchat.R;
@@ -220,15 +221,84 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
      *
      * @param mac
      */
-    String pwd = "1234";
-
+    int code=0;
+    String pwd="0000";
+    BluetoothDevice device;
     private void connectDevice(String mac) {
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mac);
-//       if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-//          ClsUtils.pair(mac, pwd);
-//       }
-        //传入要连接的蓝牙mac地址和配对码，利用反射方法调用进行配对
-        mBluetoothChatService.connectDevice(device);
+         stopScanBlueDevice();
+         device = mBluetoothAdapter.getRemoteDevice(mac);
+         setPin();
+
+
+    }
+
+
+    public class MyThread extends Thread {
+        @Override
+        public void run(){
+            if(code==0){
+                if(device.getBondState()==BluetoothDevice.BOND_NONE){
+                    pair(0);
+                }else if(device.getBondState() == BluetoothDevice.BOND_BONDED){
+                    //  Log.e("连接","配对success去连接");
+                    code=1;
+                    pair(1);
+                }else if(device.getBondState() == BluetoothDevice.BOND_BONDING) {
+                    pair(1);
+
+                }
+            }
+        }
+
+
+    }
+
+
+
+    private void setPin(){
+        try {
+            if (device.getBondState() == BluetoothDevice.BOND_NONE) {
+                //传入要连接的蓝牙mac地址和配对码，利用反射方法调用进行配对
+                code=0;
+                com.michelle.blt.bluetoothchat.util.Log.d(TAG,"没有配对");
+
+                try {
+                    boolean ret = ClsUtils.pair(device.getAddress(),pwd);
+                    Log.e("连接前","ret"+ret);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }else if(device.getBondState() == BluetoothDevice.BOND_BONDED){
+                // 配对完成Start the thread to connect with the given device
+                code=1;
+
+                //传入要连接的蓝牙mac地址和配对码，利用反射方法调用进行配对
+                mBluetoothChatService.connectDevice(device);
+            }
+            new MyThread().start();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void pair(int code){
+        if(code==0){
+            setPin();
+        }else {
+            new MyThread2().start();
+        }
+    }
+
+    public class MyThread2 extends Thread {
+        @Override
+        public void run(){
+            setPin();
+        }
+
+
     }
 
     /**
@@ -279,32 +349,39 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     private SwipeRefreshLayout.OnRefreshListener onRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
         @Override
         public void onRefresh() {
-
-            if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
-                list.clear();
-                //扫描的是已配对的
-                Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-                if (pairedDevices.size() > 0) {
-                    list.add(new BlueTooth("已配对的设备", BlueTooth.TAG_TOAST));
-                    for (BluetoothDevice device : pairedDevices) {
-                        Log.e(TAG, device.getName() + "\n" + device.getAddress());
-                        list.add(new BlueTooth(device.getName(), device.getAddress(), ""));
-                    }
-                    list.add(new BlueTooth("已扫描的设备", BlueTooth.TAG_TOAST));
-                } else {
-                    ToastUtil.showText(getApplicationContext(), "没有找到已匹对的设备！");
-                    list.add(new BlueTooth("已扫描的设备", BlueTooth.TAG_TOAST));
-                }
-                recyclerAdapter.notifyDataSetChanged();
-                //开始扫描设备
-                mBluetoothAdapter.startDiscovery();
-                ToastUtil.showText(MainActivity.this, "开始扫描设备");
-            } else {
-                swipeRefreshLayout.setRefreshing(false);
-                ToastUtil.showText(MainActivity.this, "请开启蓝牙");
-            }
+            refreshData();
         }
     };
+
+
+
+    private  void refreshData(){
+        if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
+            list.clear();
+            //扫描的是已配对的
+            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+            if (pairedDevices.size() > 0) {
+                list.add(new BlueTooth("已配对的设备", BlueTooth.TAG_TOAST));
+                for (BluetoothDevice device : pairedDevices) {
+                    Log.e(TAG, device.getName() + "\n" + device.getAddress());
+                    list.add(new BlueTooth(device.getName(), device.getAddress(), ""));
+                }
+                list.add(new BlueTooth("已扫描的设备", BlueTooth.TAG_TOAST));
+            } else {
+                ToastUtil.showText(getApplicationContext(), "没有找到已匹对的设备！");
+                list.add(new BlueTooth("已扫描的设备", BlueTooth.TAG_TOAST));
+            }
+            recyclerAdapter.notifyDataSetChanged();
+            doDiscovery();
+            ToastUtil.showText(MainActivity.this, "开始扫描设备");
+        } else {
+            swipeRefreshLayout.setRefreshing(false);
+            ToastUtil.showText(MainActivity.this, "请开启蓝牙");
+        }
+    }
+
+
+
 
     //数据保存
     public void save(View view) {
@@ -362,6 +439,22 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         swipeRefreshLayout.setRefreshing(false);
         ToastUtil.showText(MainActivity.this, "扫描完成");
     }
+    /**
+     * 停止搜索蓝牙设备
+     * Stop searching for Bluetooth devices
+     * */
+    public void stopScanBlueDevice(){
+        if (mBluetoothAdapter.isDiscovering() )
+        {
+            mBluetoothAdapter.cancelDiscovery();
+        }
+    }
 
+    private void doDiscovery() {
+        if (mBluetoothAdapter.isDiscovering()) {
+            mBluetoothAdapter.cancelDiscovery();
+        }
+        mBluetoothAdapter.startDiscovery();
 
+    }
 }
