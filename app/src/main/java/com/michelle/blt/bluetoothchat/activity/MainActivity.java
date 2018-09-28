@@ -1,5 +1,6 @@
 package com.michelle.blt.bluetoothchat.activity;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -8,6 +9,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,12 +19,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import com.michelle.blt.bluetoothchat.adapter.RecyclerBlueToothAdapter;
 import com.michelle.blt.bluetoothchat.bean.BlueTooth;
 import com.michelle.blt.bluetoothchat.receiver.BlueToothReceiver;
 import com.michelle.blt.bluetoothchat.service.BluetoothChatService;
 import com.michelle.blt.bluetoothchat.util.ClsUtils;
+import com.michelle.blt.bluetoothchat.util.PermissionUtils;
 import com.michelle.blt.bluetoothchat.util.ToastUtil;
 import com.michelle.blt.bluetoothchat.vinterface.BlueToothInterface;
 import com.rdc.zzh.bluetoothchat.R;
@@ -64,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
                     if (msg.what == BluetoothAdapter.STATE_ON) {
                         st.setText("蓝牙已开启");
                         Log.e(TAG, "onCheckedChanged: startIntent");
-                        //自动刷新
+                //        自动刷新
                         swipeRefreshLayout.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -72,12 +76,14 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
                                 onRefreshListener.onRefresh();
                             }
                         }, 300);
+
                         //开启socket监听
                         mBluetoothChatService = BluetoothChatService.getInstance(handler);
                         mBluetoothChatService.start();
                     } else if (msg.what == BluetoothAdapter.STATE_OFF) {
                         st.setText("蓝牙已关闭");
-                        recyclerAdapter.setWifiData(null);
+                        //recyclerAdapter.setWifiData(null);
+                        list.clear();
                         recyclerAdapter.notifyDataSetChanged();
                         mBluetoothChatService.stop();
                     }
@@ -132,6 +138,9 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(recyclerAdapter);
 
+
+
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); //获取本地蓝牙实例
         //判断蓝牙是否开启来设置状态
         if (mBluetoothAdapter.isEnabled()) {
@@ -143,13 +152,6 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             st.setText("蓝牙已关闭");
         }
         mReceiver = new BlueToothReceiver(this);
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
         String ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST";
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_PAIRING_REQUEST);
@@ -157,11 +159,40 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         this.registerReceiver(mReceiver, filter);
 
+
+
+
+    }
+    //创建监听权限的接口对象
+    PermissionUtils.IPermissionsResult permissionsResult = new PermissionUtils.IPermissionsResult() {
+        @Override
+        public void passPermissons() {
+            Toast.makeText(MainActivity.this, "权限通过，可以做其他事情!", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void forbitPermissons() {
+//finish();
+            Toast.makeText(MainActivity.this, "权限不通过!", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //就多一个参数this
+        PermissionUtils.getInstance().onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
         if (mBluetoothAdapter.isEnabled()) {
             Log.e(TAG, "onResume: resumeStart");
             mBluetoothChatService = BluetoothChatService.getInstance(handler);
             mBluetoothChatService.start();
         }
+
+
     }
 
     @Override
@@ -356,6 +387,13 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
 
     private  void refreshData(){
+
+        //两个日历权限和一个数据读写权限
+        String[] permissions = new String[]{Manifest.permission.BLUETOOTH_ADMIN,Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+        //  PermissionsUtils.showSystemSetting = false;//是否支持显示系统设置权限设置窗口跳转
+        //这里的this不是上下文，是Activity对象！
+        PermissionUtils.getInstance().chekPermissions(this, permissions, permissionsResult);
+
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
             list.clear();
             //扫描的是已配对的
@@ -436,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
 
     @Override
     public void searchFinish() {
+        recyclerAdapter.notifyDataSetChanged();
         swipeRefreshLayout.setRefreshing(false);
         ToastUtil.showText(MainActivity.this, "扫描完成");
     }
@@ -457,4 +496,5 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
         mBluetoothAdapter.startDiscovery();
 
     }
+
 }
