@@ -4,3 +4,6 @@
 ![扫描设备](http://upload-images.jianshu.io/upload_images/4356742-47154ba1035151f0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ![蓝牙聊天](http://upload-images.jianshu.io/upload_images/4356742-cca2b186a9e4b663.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+新增权限工具类和数据转换工具类
