@@ -151,13 +151,7 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
             st.setChecked(false);
             st.setText("蓝牙已关闭");
         }
-        mReceiver = new BlueToothReceiver(this);
-        String ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST";
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_PAIRING_REQUEST);
-        filter.addAction(BluetoothDevice.ACTION_FOUND);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        this.registerReceiver(mReceiver, filter);
+
 
 
 
@@ -186,6 +180,16 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     @Override
     protected void onResume() {
         super.onResume();
+
+
+        mReceiver = new BlueToothReceiver(this);
+        String ACTION_PAIRING_REQUEST = "android.bluetooth.device.action.PAIRING_REQUEST";
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_PAIRING_REQUEST);
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        this.registerReceiver(mReceiver, filter);
+
         if (mBluetoothAdapter.isEnabled()) {
             Log.e(TAG, "onResume: resumeStart");
             mBluetoothChatService = BluetoothChatService.getInstance(handler);
@@ -227,12 +231,19 @@ public class MainActivity extends AppCompatActivity implements CompoundButton.On
     }
 
     private void close() {
-        if (timer != null)
+        if (timer != null){
             timer.cancel();
+
+        }
         //取消扫描
-        mBluetoothAdapter.cancelDiscovery();
-        swipeRefreshLayout.setRefreshing(false);
-        unregisterReceiver(mReceiver);
+        if( mBluetoothAdapter!=null){
+            mBluetoothAdapter.cancelDiscovery();
+            swipeRefreshLayout.setRefreshing(false);
+        }
+        if(mReceiver!=null){
+            unregisterReceiver(mReceiver);
+
+        }
     }
 
     /**

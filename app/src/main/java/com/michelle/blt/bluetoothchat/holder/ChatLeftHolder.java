@@ -2,6 +2,7 @@ package com.michelle.blt.bluetoothchat.holder;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.rdc.zzh.bluetoothchat.R;
@@ -14,10 +15,17 @@ public class ChatLeftHolder extends RecyclerView.ViewHolder{
 
     private TextView tvContent;
     private TextView tvName;
+    private ImageView imageView;
     public ChatLeftHolder(View itemView) {
         super(itemView);
         tvContent = (TextView) itemView.findViewById(R.id.tv_left);
         tvName = (TextView) itemView.findViewById(R.id.tv_device);
+        imageView=(ImageView)itemView.findViewById(R.id.image_left);
+    }
+
+
+    public ImageView getImageView() {
+        return imageView;
     }
 
     public TextView getTvContent() {

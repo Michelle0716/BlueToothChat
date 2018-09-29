@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import static java.sql.Types.BLOB;
+
 /**
  * Created by michelle on 2017/4/22
  * 保存在本地数据
@@ -16,8 +18,9 @@ public class SQLHelper extends SQLiteOpenHelper {
     public static final String COLUMN_NAME = "device_name";
     public static final String COLUMN_TAG = "tag";
     public static final String COLUMN_CONTENT = "content";
+    public static final String COLUMN_pic = "pic";
     private static final String CREATE_TABLE = "create table " + TABLE_NAME +
-            "(" + COLUMN_ID + " varchar(40) , " + COLUMN_NAME + " varchar(20) ," + COLUMN_TAG  + " int , " + COLUMN_CONTENT + " varchar(100)) ";
+            "(" + COLUMN_ID + " varchar(40) , " + COLUMN_NAME + " varchar(20) ," + COLUMN_TAG  + " int , " + COLUMN_CONTENT + " varchar(100) "+ COLUMN_pic + BLOB+")";
     public SQLHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
     }

@@ -1,7 +1,10 @@
 package com.michelle.blt.bluetoothchat.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,8 +13,10 @@ import android.view.ViewGroup;
 import com.michelle.blt.bluetoothchat.bean.ChatInfo;
 import com.michelle.blt.bluetoothchat.holder.ChatLeftHolder;
 import com.michelle.blt.bluetoothchat.holder.ChatRightHolder;
+import com.michelle.blt.bluetoothchat.util.DataChangeUtil;
 import com.rdc.zzh.bluetoothchat.R;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 /**
@@ -53,13 +58,33 @@ public class RecyclerChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if (list.get(position).getTag() == ChatInfo.TAG_LEFT) {
             ChatLeftHolder chatLeftHolder = (ChatLeftHolder) holder;
             chatLeftHolder.getTvName().setText(list.get(position).getName());
-            chatLeftHolder.getTvContent().setText(list.get(position).getContent());
+            if(!TextUtils.isEmpty(list.get(position).getContent())){
+                chatLeftHolder.getTvContent().setText(list.get(position).getContent());
+
+            }
+            if(list.get(position).getDrawble()!=null){
+                Bitmap bitmap= DataChangeUtil.Bytes2Bimap(list.get(position).getDrawble());
+                chatLeftHolder.getImageView().setImageBitmap(bitmap);
+
+            }
         } else{
             ChatRightHolder chatRightHolder = (ChatRightHolder) holder;
             chatRightHolder.getTvName().setText(list.get(position).getName());
-            chatRightHolder.getTvContent().setText(list.get(position).getContent());
+            if(!TextUtils.isEmpty(list.get(position).getContent())){
+                chatRightHolder.getTvContent().setText(list.get(position).getContent());
+
+            }
+            if(list.get(position).getDrawble()!=null){
+                Bitmap bitmap=DataChangeUtil.Bytes2Bimap(list.get(position).getDrawble());
+                chatRightHolder.getImageView().setImageBitmap(bitmap);
+
+            }
+
         }
     }
+
+
+
 
     @Override
     public int getItemCount() {

@@ -20,6 +20,7 @@ import com.michelle.blt.bluetoothchat.adapter.RecyclerChatAdapter;
 import com.michelle.blt.bluetoothchat.bean.ChatInfo;
 import com.michelle.blt.bluetoothchat.database.SQLHelper;
 import com.michelle.blt.bluetoothchat.service.BluetoothChatService;
+import com.michelle.blt.bluetoothchat.util.DataChangeUtil;
 import com.michelle.blt.bluetoothchat.util.MD5Util;
 import com.michelle.blt.bluetoothchat.util.ToastUtil;
 import com.rdc.zzh.bluetoothchat.R;
@@ -34,6 +35,7 @@ import static com.michelle.blt.bluetoothchat.database.SQLHelper.COLUMN_CONTENT;
 import static com.michelle.blt.bluetoothchat.database.SQLHelper.COLUMN_ID;
 import static com.michelle.blt.bluetoothchat.database.SQLHelper.COLUMN_NAME;
 import static com.michelle.blt.bluetoothchat.database.SQLHelper.COLUMN_TAG;
+import static com.michelle.blt.bluetoothchat.database.SQLHelper.COLUMN_pic;
 import static com.michelle.blt.bluetoothchat.database.SQLHelper.DB_NAME;
 import static com.michelle.blt.bluetoothchat.database.SQLHelper.TABLE_NAME;
 
@@ -64,19 +66,29 @@ public class ChatActivity extends AppCompatActivity {
                     finish();
                 }break;
                 case BLUE_TOOTH_READ:{
+                    //接收读取端
                     byte[] readBuf = (byte[]) msg.obj;
                     String readMessage = new String(readBuf, 0, msg.arg1);
-                    list.add(new ChatInfo(ChatInfo.TAG_LEFT , deviceName, readMessage));
+                    list.add(new ChatInfo(ChatInfo.TAG_LEFT , deviceName, readMessage,readBuf));
+
                     recyclerChatAdapter.notifyDataSetChanged();
                     recyclerView.smoothScrollToPosition(list.size());
                 }break;
                 case BLUE_TOOTH_WRAITE:{
+                    //发送端
                     byte[] writeBuf = (byte[]) msg.obj;
                     // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    list.add(new ChatInfo(ChatInfo.TAG_RIGHT , "我" , writeMessage));
+                    if(code==0){
+                        String writeMessage = new String(writeBuf);
+                        list.add(new ChatInfo(ChatInfo.TAG_RIGHT , "我" , writeMessage,null));
+
+                    }else {
+                        list.add(new ChatInfo(ChatInfo.TAG_RIGHT , "我", "",writeBuf));
+
+                    }
                     recyclerChatAdapter.notifyDataSetChanged();
                     recyclerView.smoothScrollToPosition(list.size());
+
                 }break;
                 case UPDATE_DATA:{
                     recyclerChatAdapter.notifyDataSetChanged();
@@ -142,6 +154,7 @@ public class ChatActivity extends AppCompatActivity {
             contentValues.put(COLUMN_TAG , chatInfo.getTag());
             contentValues.put(COLUMN_NAME , chatInfo.getName());
             contentValues.put(COLUMN_CONTENT , chatInfo.getContent());
+            contentValues.put(COLUMN_pic , chatInfo.getDrawble());
             db.insert(TABLE_NAME , null , contentValues);
         }
     }
@@ -151,12 +164,13 @@ public class ChatActivity extends AppCompatActivity {
         SQLiteDatabase db = sqlHelper.getWritableDatabase();
         Cursor cursor = db.rawQuery("select * from " + TABLE_NAME + " where " + COLUMN_ID + " = ?"  , new String[]{MD5Util.stringToMD5(deviceName + "我")});
         if(cursor.moveToFirst()){
-            do{
-                ChatInfo chatInfo = new ChatInfo(Integer.parseInt(cursor.getString(cursor.getColumnIndex(COLUMN_TAG))) ,
-                        cursor.getString(cursor.getColumnIndex(COLUMN_NAME)) ,
-                        cursor.getString(cursor.getColumnIndex(COLUMN_CONTENT)));
-                list.add(chatInfo);
-            }while (cursor.moveToNext());
+           do{
+               ChatInfo chatInfo = new ChatInfo(Integer.parseInt(cursor.getString(cursor.getColumnIndex(COLUMN_TAG))) ,
+                       cursor.getString(cursor.getColumnIndex(COLUMN_NAME)) ,
+                       cursor.getString(cursor.getColumnIndex(COLUMN_CONTENT)), cursor.getBlob(cursor.getColumnIndex(COLUMN_pic)));
+               list.add(chatInfo);
+           }
+            while (cursor.moveToNext());
         }
         handler.sendEmptyMessage(UPDATE_DATA);
     }
@@ -182,15 +196,22 @@ public class ChatActivity extends AppCompatActivity {
      * 发送监听
      * @param view
      */
+    private int code=0;
     public void send(View view){
         if(!etWrite.getText().toString().equals("")) {
+            code=0;
             bluetoothChatService.sendData(etWrite.getText().toString().getBytes());
             etWrite.setText("");
         }
         else{
+            code=1;
+            byte[] encode = DataChangeUtil.Bitmap2Bytes(this,R.mipmap.ic_launcher);
+            bluetoothChatService.sendData(encode);
             ToastUtil.showText(ChatActivity.this , "发送的消息不能为空");
         }
     }
+
+
 
     @Override
     protected void onPause() {

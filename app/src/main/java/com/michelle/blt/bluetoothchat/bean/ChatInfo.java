@@ -1,5 +1,7 @@
 package com.michelle.blt.bluetoothchat.bean;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by michelle on 2017/5/16.
  */
@@ -10,11 +12,22 @@ public class ChatInfo {
     private int tag;
     private String name;
     private String content;
+    public  byte[] drawble;
 
-    public ChatInfo(int tag, String name, String content) {
+    public ChatInfo(int tag, String name, String content,byte[] drable) {
         this.tag = tag;
         this.name = name;
         this.content = content;
+        this.drawble=drable;
+
+    }
+
+    public byte[] getDrawble() {
+        return drawble;
+    }
+
+    public void setDrawble(byte[] drawble) {
+        this.drawble = drawble;
     }
 
     public int getTag() {

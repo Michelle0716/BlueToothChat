@@ -33,4 +33,15 @@
         android:text="dwq"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+    <ImageView
+        android:paddingTop="5dp"
+        android:gravity="right|center_vertical"
+        android:layout_marginLeft="5dp"
+        android:layout_alignTop="@id/tv_left"
+        android:layout_toRightOf="@+id/tv_left"
+        android:layout_marginRight="40dp"
+        android:text="dwq"
+        android:id="@+id/image_left"
+        android:layout_width="40dp"
+        android:layout_height="40dp" />
 </RelativeLayout>
